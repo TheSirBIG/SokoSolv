@@ -129,16 +129,23 @@ void clearPos()
 // не совсем помогает - нужно также держать историю, и отказывать, если приходит на ту же позицию
 bool canManMove(posType* curPos, manPosType src, manPosType dest, char m, manHistType* mh)
 {
+    static int qqq = 0;
     bool retval = false;
     manPosType a;
 
     if (m == '0')
     {
+        qqq++;
+        if (qqq == 35)
+        {
+            std::cout << "here stack overflow" << std::endl;
+        }
         clearManHist();
         manHist.x = src.x;
         manHist.y = src.y;
     };
 
+//    std::cout << qqq++ << std::endl;
     if (curPos->pos[src.y][src.x] == 255) return false;
     if (curPos->pos[src.y][src.x] == 1) return false;
     if (curPos->pos[src.y][src.x] == 9) return false;
@@ -339,9 +346,9 @@ void Solver(posType* pos)
         {
             if ((pos->pos[i][j] == 1) || (pos->pos[i][j] == 9))
             {
+                std::cout << "try left" << std::endl;
                 if (canCrateLeft(pos, j, i))
                 {
-                    std::cout << "try left" << std::endl;
                     addr = createNewPos(pos);
                     addr->pos[i][j - 1] = addr->pos[i][j-1] ^0x01; //новое место
                     addr->pos[i][j] = addr->pos[i][j] ^0x01; //старое место
@@ -352,9 +359,9 @@ void Solver(posType* pos)
                     addr->craftWasMoved.y = i;
                     Solver(addr);
                 }
+                std::cout << "try right" << std::endl;
                 if (canCrateRight(pos, j, i))
                 {
-                    std::cout << "try right" << std::endl;
                     addr = createNewPos(pos);
                     addr->pos[i][j + 1] = addr->pos[i][j + 1] ^ 0x01; //новое место
                     addr->pos[i][j] = addr->pos[i][j] ^ 0x01; //старое место
@@ -365,9 +372,9 @@ void Solver(posType* pos)
                     addr->craftWasMoved.y = i;
                     Solver(addr);
                 }
+                std::cout << "try up" << std::endl;
                 if (canCrateUp(pos, j, i))
                 {
-                    std::cout << "try up" << std::endl;
                     addr = createNewPos(pos);
                     addr->pos[i-1][j] = addr->pos[i-1][j] ^ 0x01; //новое место
                     addr->pos[i][j] = addr->pos[i][j] ^ 0x01; //старое место
@@ -378,9 +385,9 @@ void Solver(posType* pos)
                     addr->craftWasMoved.y = i;
                     Solver(addr);
                 }
+                std::cout << "try down" << std::endl;
                 if (canCrateDown(pos, j, i))
                 {
-                    std::cout << "try down" << std::endl;
                     addr = createNewPos(pos);
                     addr->pos[i + 1][j] = addr->pos[i + 1][j] ^ 0x01; //новое место
                     addr->pos[i][j] = addr->pos[i][j] ^ 0x01; //старое место
