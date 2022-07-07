@@ -13,8 +13,8 @@
 // 128 - человек (не использую, ввел переменную позиции)
 //#define MAX_X  7         // включая стены по периметру!!!
 //#define MAX_Y  7         // включая стены по периметру!!!
-#define MAX_X  8         // включая стены по периметру!!!
-#define MAX_Y  8         // включая стены по периметру!!!
+#define MAX_X  6         // включая стены по периметру!!!
+#define MAX_Y  6         // включая стены по периметру!!!
 #define NUM_OF_CRATES 2
 
 typedef struct
@@ -324,6 +324,7 @@ bool ifPosExisting(posType* pos)
 }
 
 //очень долго и оооочень много памяти жрет
+//и что-то не очень работает, буду другую думать
 void Solver(posType* pos)
 {
     posType* addr;
@@ -361,7 +362,7 @@ void Solver(posType* pos)
     if (ifPosExisting(pos))
     {
         deletePos(pos);
-        std::cout << "deleting" << std::endl;
+//        std::cout << "deleting" << std::endl;
         return;
     }
     //проверить на финальную позицию, пока вывести в терминал путь
@@ -395,7 +396,7 @@ void Solver(posType* pos)
             {
                 if (canCrateDown(pos, j, i) || canCrateLeft(pos, j, i) || canCrateRight(pos, j, i) || canCrateUp(pos, j, i))
                 {
-                    std::cout << "try left" << std::endl;
+//                    std::cout << "try left" << std::endl;
                     if (canCrateLeft(pos, j, i))
                     {
                         addr = createNewPos(pos);
@@ -406,7 +407,22 @@ void Solver(posType* pos)
                         addr->dir = 'L';
                         addr->craftWasMoved.x = j;
                         addr->craftWasMoved.y = i;
-                        Solver(addr);
+                        //если ящик в новом месте нельзя сдвинуть, и он не на маркере - эта позиция удаляется, и рекурсия не вызывается
+                        //т.е. рекурсия - когда на маркере и нельзя сдвинуть, или можно сдвинуть
+                        if (canCrateDown(addr, j - 1, i) || canCrateLeft(addr, j - 1, i) || canCrateRight(addr, j - 1, i) || canCrateUp(addr, j - 1, i))
+                        {
+                            Solver(addr);
+                        }
+                        else
+                            if (addr->pos[i][j - 1] == 9)
+                            {
+                                Solver(addr);
+                            }
+                            else
+                            {
+                                delete addr;
+                                pos->next = nullptr;
+                            }
                     }
 //                    std::cout << "try right" << std::endl;
                     if (canCrateRight(pos, j, i))
@@ -419,7 +435,22 @@ void Solver(posType* pos)
                         addr->dir = 'R';
                         addr->craftWasMoved.x = j;
                         addr->craftWasMoved.y = i;
-                        Solver(addr);
+                        //если ящик в новом месте нельзя сдвинуть, и он не на маркере - эта позиция удаляется, и рекурсия не вызывается
+                        //т.е. рекурсия - когда на маркере и нельзя сдвинуть, или можно сдвинуть
+                        if (canCrateDown(addr, j + 1, i) || canCrateLeft(addr, j + 1, i) || canCrateRight(addr, j + 1, i) || canCrateUp(addr, j + 1, i))
+                        {
+                            Solver(addr);
+                        }
+                        else
+                            if (addr->pos[i][j + 1] == 9)
+                            {
+                                Solver(addr);
+                            }
+                            else
+                            {
+                                delete addr;
+                                pos->next = nullptr;
+                            }
                     }
 //                    std::cout << "try up" << std::endl;
                     if (canCrateUp(pos, j, i))
@@ -432,7 +463,22 @@ void Solver(posType* pos)
                         addr->dir = 'U';
                         addr->craftWasMoved.x = j;
                         addr->craftWasMoved.y = i;
-                        Solver(addr);
+                        //если ящик в новом месте нельзя сдвинуть, и он не на маркере - эта позиция удаляется, и рекурсия не вызывается
+                        //т.е. рекурсия - когда на маркере и нельзя сдвинуть, или можно сдвинуть
+                        if (canCrateDown(addr, j, i - 1) || canCrateLeft(addr, j, i - 1) || canCrateRight(addr, j, i - 1) || canCrateUp(addr, j, i - 1))
+                        {
+                            Solver(addr);
+                        }
+                        else
+                            if (addr->pos[i-1][j] == 9)
+                            {
+                                Solver(addr);
+                            }
+                            else
+                            {
+                                delete addr;
+                                pos->next = nullptr;
+                            }
                     }
 //                    std::cout << "try down" << std::endl;
                     if (canCrateDown(pos, j, i))
@@ -445,7 +491,22 @@ void Solver(posType* pos)
                         addr->dir = 'D';
                         addr->craftWasMoved.x = j;
                         addr->craftWasMoved.y = i;
-                        Solver(addr);
+                        //если ящик в новом месте нельзя сдвинуть, и он не на маркере - эта позиция удаляется, и рекурсия не вызывается
+                        //т.е. рекурсия - когда на маркере и нельзя сдвинуть, или можно сдвинуть
+                        if (canCrateDown(addr, j, i+1) || canCrateLeft(addr, j, i+1) || canCrateRight(addr, j, i+1) || canCrateUp(addr, j, i+1))
+                        {
+                            Solver(addr);
+                        }
+                        else
+                            if (addr->pos[i+1][j] == 9)
+                            {
+                                Solver(addr);
+                            }
+                            else
+                            {
+                                delete addr;
+                                pos->next = nullptr;
+                            }
                     }
                 }
                 else
@@ -475,7 +536,7 @@ void solver2GeneratePositions()
         for (int j = 0; j < MAX_X; j++)
             if (startPos.pos[i][j] != 255) numSq++;
     //подсчет колиества вариантов расположения
-    numPos = tableFact[13];
+    numPos = tableFact[1];
     //заготовка массива шаблонов
     buf = new byte * [1];
 }
@@ -489,24 +550,24 @@ void createInitPos()
 //                                    {255, 0,   0,   9,   1,   1,   255},
 //                                    {255, 255, 0,   0,   0,   0,   255},
 //                                    {255, 255, 255, 255, 255, 255, 255} };
-    byte dummyPos[MAX_Y][MAX_X] = { {255, 255, 255, 255, 255, 255, 255, 255},
-                                    {255, 255, 255, 8,   255, 255, 255, 255},
-                                    {255, 255, 255, 1,   255, 255, 255, 255},
-                                    {255, 255, 255, 0,   0,   1,   8,   255},
-                                    {255, 8,   1,   0,   0,   255, 255, 255},
-                                    {255, 255, 255, 255, 1,   255, 255, 255},
-                                    {255, 255, 255, 255, 8,   255, 255, 255},
-                                    {255, 255, 255, 255, 255, 255, 255, 255} };
-//    byte dummyPos[MAX_Y][MAX_X] = { {255, 255, 255, 255, 255, 255},
-//                                    {255, 8,   0,   0,   8,   255},
-//                                    {255, 0,   0,   0,   0,   255},
-//                                    {255, 0,   1,   0,   1,   255},
-//                                    {255, 255, 0,   0,   0,   255},
-//                                    {255, 255, 255, 255, 255, 255} };
+//    byte dummyPos[MAX_Y][MAX_X] = { {255, 255, 255, 255, 255, 255, 255, 255},
+//                                    {255, 255, 255, 8,   255, 255, 255, 255},
+//                                    {255, 255, 255, 1,   255, 255, 255, 255},
+//                                    {255, 255, 255, 0,   0,   1,   8,   255},
+//                                    {255, 8,   1,   0,   0,   255, 255, 255},
+//                                    {255, 255, 255, 255, 1,   255, 255, 255},
+//                                    {255, 255, 255, 255, 8,   255, 255, 255},
+//                                    {255, 255, 255, 255, 255, 255, 255, 255} };
+    byte dummyPos[MAX_Y][MAX_X] = { {255, 255, 255, 255, 255, 255},
+                                    {255, 8,   0,   0,   8,   255},
+                                    {255, 0,   0,   0,   0,   255},
+                                    {255, 0,   1,   0,   1,   255},
+                                    {255, 255, 0,   0,   0,   255},
+                                    {255, 255, 255, 255, 255, 255} };
     for (int i = 0; i < MAX_Y; i++)
         for (int j = 0; j < MAX_X; j++) startPos.pos[i][j] = dummyPos[i][j];
-    startPos.manPos.x = 4;
-    startPos.manPos.y = 4;
+    startPos.manPos.x = 3;
+    startPos.manPos.y = 3;
     startPos.next = startPos.prev = nullptr;
     manHist.next = manHist.prev = nullptr;
 
