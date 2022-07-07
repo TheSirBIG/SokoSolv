@@ -11,8 +11,11 @@
 // 8   - конечное место
 // 9   - ящик на конечном месте
 // 128 - человек (не использую, ввел переменную позиции)
-#define MAX_X  7         // включая стены по периметру!!!
-#define MAX_Y  7         // включая стены по периметру!!!
+//#define MAX_X  7         // включая стены по периметру!!!
+//#define MAX_Y  7         // включая стены по периметру!!!
+#define MAX_X  8         // включая стены по периметру!!!
+#define MAX_Y  8         // включая стены по периметру!!!
+#define NUM_OF_CRATES 2
 
 typedef struct
 {
@@ -126,7 +129,7 @@ void clearPos()
 
 // m - направление предыдущего сдвига, только для внутренней рекурсии (чтобы избежать зацикливания)
 // '0' - самое начало
-// не совсем помогает - нужно также держать историю, и отказывать, если приходит на ту же позицию
+// не совсем помогает - нужно также держать историю, и отказывать, если приходит на существующие позиции
 bool canManMove(posType* curPos, manPosType src, manPosType dest, char m, manHistType* mh)
 {
     static int qqq = 0;
@@ -136,6 +139,10 @@ bool canManMove(posType* curPos, manPosType src, manPosType dest, char m, manHis
     if (m == '0')
     {
         qqq++;
+        if (qqq == 25)
+        {
+            std::cout << "unknown fail" << std::endl;
+        }
         if (qqq == 35)
         {
             std::cout << "here stack overflow" << std::endl;
@@ -146,6 +153,11 @@ bool canManMove(posType* curPos, manPosType src, manPosType dest, char m, manHis
     };
 
 //    std::cout << qqq++ << std::endl;
+    if (qqq == 25)
+    {
+        std::cout << "unknown fail" << std::endl;
+    }
+
     if (curPos->pos[src.y][src.x] == 255) return false;
     if (curPos->pos[src.y][src.x] == 1) return false;
     if (curPos->pos[src.y][src.x] == 9) return false;
@@ -169,7 +181,7 @@ bool canManMove(posType* curPos, manPosType src, manPosType dest, char m, manHis
            }
            else
            {
-               deleteLastManHist();
+//               deleteLastManHist();
            }
     }
     //right
@@ -188,7 +200,7 @@ bool canManMove(posType* curPos, manPosType src, manPosType dest, char m, manHis
         }
         else
         {
-            deleteLastManHist();
+//            deleteLastManHist();
         }
     }
     //up
@@ -207,7 +219,7 @@ bool canManMove(posType* curPos, manPosType src, manPosType dest, char m, manHis
         }
         else
         {
-            deleteLastManHist();
+//            deleteLastManHist();
         }
     }
     //down
@@ -226,7 +238,7 @@ bool canManMove(posType* curPos, manPosType src, manPosType dest, char m, manHis
         }
         else
         {
-            deleteLastManHist();
+//            deleteLastManHist();
         }
     }
     return(retval);
@@ -274,8 +286,9 @@ bool ifPosFinal(posType* pos)
     return true;
 }
 
-bool ifPosIdentifical(posType* a1, posType* a2)
+bool ifPosIdentifical(posType* a1, posType* a2, bool man)
 {
+    //man - проверять ли положение человека на соответствие
     bool retval = true;
 
     for (int i = 0; i < MAX_Y; i++)
@@ -284,7 +297,7 @@ bool ifPosIdentifical(posType* a1, posType* a2)
             if (a1->pos[i][j] != a2->pos[i][j]) retval = false;
             break;
         }
-    if (retval)
+    if (retval && man)
     {
         //все ящики стоят идентично, надо проверить положение человека
         if ((a1->manPos.x != a2->manPos.x) || (a1->manPos.y != a2->manPos.y)) retval = false;
@@ -303,22 +316,52 @@ bool ifPosExisting(posType* pos)
     addr = startPos.next;
     while (addr != pos)
     {
-        retval = ifPosIdentifical(addr, pos);
+        retval = ifPosIdentifical(addr, pos, true);
         if (retval) break;
         addr = addr->next;
     }
     return retval;
 }
 
+//очень долго и оооочень много памяти жрет
 void Solver(posType* pos)
 {
     posType* addr;
     bool canMove;
+    int qqq;
 
+//печать позиции в файл
+/*
+    for (int i = 0; i < MAX_Y; i++)
+    {
+        for (int j = 0; j < MAX_X; j++)
+        {
+            switch (pos->pos[i][j])
+            {
+            case 1:
+                std::cout << "1";
+                break;
+            case 8:
+                std::cout << "o";
+                break;
+            case 9:
+                std::cout << "O";
+                break;
+            case 0:
+                std::cout << " ";
+                break;
+            default:
+                std::cout << "X";
+            }
+        }
+        std::cout << std::endl;
+    }
+*/
     //пришла новая позиция, проверить идентичность, если да - то удалить и выйти
     if (ifPosExisting(pos))
     {
         deletePos(pos);
+        std::cout << "deleting" << std::endl;
         return;
     }
     //проверить на финальную позицию, пока вывести в терминал путь
@@ -327,14 +370,18 @@ void Solver(posType* pos)
     {
         std::cout << "path found:" << std::endl;
         addr = startPos.next;
+        qqq = 1;
         while (addr != pos)
         {
             std::cout << (int)addr->craftWasMoved.x << "," << (int)addr->craftWasMoved.y << "," << addr->dir << std::endl;
             addr = addr->next;
+            qqq++;
         }
         std::cout << (int)addr->craftWasMoved.x << "," << (int)addr->craftWasMoved.y << "," << addr->dir << std::endl;
-        deletePos(pos);
-        return;
+        //deletePos(pos);
+        std::cout << "total " << qqq << std::endl;
+//        std::cin >> qqq;
+        goto commonExit;
     }
     //цикл по всем ящикам
     //проверить на возможные движения, если можно - создать новую позицию, заполнить поля ящика и направления, рекурсия
@@ -346,77 +393,120 @@ void Solver(posType* pos)
         {
             if ((pos->pos[i][j] == 1) || (pos->pos[i][j] == 9))
             {
-                std::cout << "try left" << std::endl;
-                if (canCrateLeft(pos, j, i))
+                if (canCrateDown(pos, j, i) || canCrateLeft(pos, j, i) || canCrateRight(pos, j, i) || canCrateUp(pos, j, i))
                 {
-                    addr = createNewPos(pos);
-                    addr->pos[i][j - 1] = addr->pos[i][j-1] ^0x01; //новое место
-                    addr->pos[i][j] = addr->pos[i][j] ^0x01; //старое место
-                    addr->manPos.x = j + 1;
-                    addr->manPos.y = i;
-                    addr->dir = 'L';
-                    addr->craftWasMoved.x = j;
-                    addr->craftWasMoved.y = i;
-                    Solver(addr);
+                    std::cout << "try left" << std::endl;
+                    if (canCrateLeft(pos, j, i))
+                    {
+                        addr = createNewPos(pos);
+                        addr->pos[i][j - 1] = addr->pos[i][j - 1] ^ 0x01; //новое место
+                        addr->pos[i][j] = addr->pos[i][j] ^ 0x01; //старое место
+                        addr->manPos.x = j + 1;
+                        addr->manPos.y = i;
+                        addr->dir = 'L';
+                        addr->craftWasMoved.x = j;
+                        addr->craftWasMoved.y = i;
+                        Solver(addr);
+                    }
+//                    std::cout << "try right" << std::endl;
+                    if (canCrateRight(pos, j, i))
+                    {
+                        addr = createNewPos(pos);
+                        addr->pos[i][j + 1] = addr->pos[i][j + 1] ^ 0x01; //новое место
+                        addr->pos[i][j] = addr->pos[i][j] ^ 0x01; //старое место
+                        addr->manPos.x = j - 1;
+                        addr->manPos.y = i;
+                        addr->dir = 'R';
+                        addr->craftWasMoved.x = j;
+                        addr->craftWasMoved.y = i;
+                        Solver(addr);
+                    }
+//                    std::cout << "try up" << std::endl;
+                    if (canCrateUp(pos, j, i))
+                    {
+                        addr = createNewPos(pos);
+                        addr->pos[i - 1][j] = addr->pos[i - 1][j] ^ 0x01; //новое место
+                        addr->pos[i][j] = addr->pos[i][j] ^ 0x01; //старое место
+                        addr->manPos.x = j;
+                        addr->manPos.y = i + 1;
+                        addr->dir = 'U';
+                        addr->craftWasMoved.x = j;
+                        addr->craftWasMoved.y = i;
+                        Solver(addr);
+                    }
+//                    std::cout << "try down" << std::endl;
+                    if (canCrateDown(pos, j, i))
+                    {
+                        addr = createNewPos(pos);
+                        addr->pos[i + 1][j] = addr->pos[i + 1][j] ^ 0x01; //новое место
+                        addr->pos[i][j] = addr->pos[i][j] ^ 0x01; //старое место
+                        addr->manPos.x = j;
+                        addr->manPos.y = i - 1;
+                        addr->dir = 'D';
+                        addr->craftWasMoved.x = j;
+                        addr->craftWasMoved.y = i;
+                        Solver(addr);
+                    }
                 }
-                std::cout << "try right" << std::endl;
-                if (canCrateRight(pos, j, i))
-                {
-                    addr = createNewPos(pos);
-                    addr->pos[i][j + 1] = addr->pos[i][j + 1] ^ 0x01; //новое место
-                    addr->pos[i][j] = addr->pos[i][j] ^ 0x01; //старое место
-                    addr->manPos.x = j - 1;
-                    addr->manPos.y = i;
-                    addr->dir = 'R';
-                    addr->craftWasMoved.x = j;
-                    addr->craftWasMoved.y = i;
-                    Solver(addr);
-                }
-                std::cout << "try up" << std::endl;
-                if (canCrateUp(pos, j, i))
-                {
-                    addr = createNewPos(pos);
-                    addr->pos[i-1][j] = addr->pos[i-1][j] ^ 0x01; //новое место
-                    addr->pos[i][j] = addr->pos[i][j] ^ 0x01; //старое место
-                    addr->manPos.x = j;
-                    addr->manPos.y = i+1;
-                    addr->dir = 'U';
-                    addr->craftWasMoved.x = j;
-                    addr->craftWasMoved.y = i;
-                    Solver(addr);
-                }
-                std::cout << "try down" << std::endl;
-                if (canCrateDown(pos, j, i))
-                {
-                    addr = createNewPos(pos);
-                    addr->pos[i + 1][j] = addr->pos[i + 1][j] ^ 0x01; //новое место
-                    addr->pos[i][j] = addr->pos[i][j] ^ 0x01; //старое место
-                    addr->manPos.x = j;
-                    addr->manPos.y = i - 1;
-                    addr->dir = 'D';
-                    addr->craftWasMoved.x = j;
-                    addr->craftWasMoved.y = i;
-                    Solver(addr);
-                }
+                else
+                    if (pos->pos[i][j] != 9)
+                    {
+                        goto commonExit;
+                    }
             }
         }
-
+commonExit:
     if(pos != &startPos) deletePos(pos);
+}
+
+static const int tableFact[] = {1, 1, 2, 6, 24, 120, 720, 5040, 40320, 362880, 3628800, 39916800, 479001600};
+
+void solver2GeneratePositions()
+{
+    //создание всех возможных позиций, вывод их чиста
+    //убирание явно глухих позиций, вывод числа оставшихся
+    int numSq;
+    int numPos;
+    byte** buf;
+
+    //подсчет числа клеток, где можно разместить ящик
+    numSq = 0;
+    for (int i = 0; i < MAX_Y; i++)
+        for (int j = 0; j < MAX_X; j++)
+            if (startPos.pos[i][j] != 255) numSq++;
+    //подсчет колиества вариантов расположения
+    numPos = tableFact[13];
+    //заготовка массива шаблонов
+    buf = new byte * [1];
 }
 
 void createInitPos()
 {
-    byte dummyPos[MAX_Y][MAX_X] = { {255, 255, 255, 255, 255, 255, 255},
-                                    {255, 0,   0,   0,   0,   255, 255},
-                                    {255, 1,   1,   9,   0,   0,   255},
-                                    {255, 8,   8,   0,   8,   8,   255},
-                                    {255, 0,   0,   9,   1,   1,   255},
-                                    {255, 255, 0,   0,   0,   0,   255},
-                                    {255, 255, 255, 255, 255, 255, 255} };
+//    byte dummyPos[MAX_Y][MAX_X] = { {255, 255, 255, 255, 255, 255, 255},
+//                                    {255, 0,   0,   0,   0,   255, 255},
+//                                    {255, 1,   1,   9,   0,   0,   255},
+//                                    {255, 8,   8,   0,   8,   8,   255},
+//                                    {255, 0,   0,   9,   1,   1,   255},
+//                                    {255, 255, 0,   0,   0,   0,   255},
+//                                    {255, 255, 255, 255, 255, 255, 255} };
+    byte dummyPos[MAX_Y][MAX_X] = { {255, 255, 255, 255, 255, 255, 255, 255},
+                                    {255, 255, 255, 8,   255, 255, 255, 255},
+                                    {255, 255, 255, 1,   255, 255, 255, 255},
+                                    {255, 255, 255, 0,   0,   1,   8,   255},
+                                    {255, 8,   1,   0,   0,   255, 255, 255},
+                                    {255, 255, 255, 255, 1,   255, 255, 255},
+                                    {255, 255, 255, 255, 8,   255, 255, 255},
+                                    {255, 255, 255, 255, 255, 255, 255, 255} };
+//    byte dummyPos[MAX_Y][MAX_X] = { {255, 255, 255, 255, 255, 255},
+//                                    {255, 8,   0,   0,   8,   255},
+//                                    {255, 0,   0,   0,   0,   255},
+//                                    {255, 0,   1,   0,   1,   255},
+//                                    {255, 255, 0,   0,   0,   255},
+//                                    {255, 255, 255, 255, 255, 255} };
     for (int i = 0; i < MAX_Y; i++)
         for (int j = 0; j < MAX_X; j++) startPos.pos[i][j] = dummyPos[i][j];
-    startPos.manPos.x = 3;
-    startPos.manPos.y = 3;
+    startPos.manPos.x = 4;
+    startPos.manPos.y = 4;
     startPos.next = startPos.prev = nullptr;
     manHist.next = manHist.prev = nullptr;
 
@@ -438,6 +528,7 @@ int main()
 //    std::cout << canManMove(&startPos, s, d, '0', &manHist) << std::endl;
 //    std::cout << canCrateLeft(&startPos, 3, 1) << std::endl;
     Solver(&startPos);
+//    solver2GeneratePositions();
 
     clearManHist();
     clearPos();
