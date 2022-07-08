@@ -3,7 +3,7 @@
 #define byte unsigned char
 
 #include <iostream>
-
+#include "openArray.hpp"
 
 // 255 - стена
 // 0   - пусто
@@ -516,6 +516,10 @@ void createInitPos()
 int main()
 {
     manPosType s, d;
+    openArray<byte> qq(200);
+    qq.put(0);
+    openArray<int> a;
+    a.put(0);
 
     std::cout << "This is a test sokovan solver\n";
     std::cout << "Working...\n";
@@ -527,7 +531,7 @@ int main()
     d.y = 3;
 //    std::cout << canManMove(&startPos, s, d, '0', &manHist) << std::endl;
 //    std::cout << canCrateLeft(&startPos, 3, 1) << std::endl;
-    Solver(&startPos);
+//    Solver(&startPos);
 //    solver2GeneratePositions();
 
     clearManHist();
