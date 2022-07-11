@@ -7,6 +7,7 @@ public:
 
 	void put(T elem);
 	T get(int idx);
+	int getNum();
 private:
 	int minLen;
 	int curIdx;
@@ -19,6 +20,12 @@ private:
 	baseStruct* baseAddr;
 	int elemSize;
 };
+
+template <typename T>
+int openArray<T>::getNum()
+{
+	return curIdx;
+}
 
 template <typename T>
 openArray<T>::openArray(int len)
