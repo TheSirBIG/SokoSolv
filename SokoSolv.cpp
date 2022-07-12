@@ -856,6 +856,7 @@ void Solver3()
     openArray<posType3*> commonArr(200);
     int startIdx, posCount;
     int posFounded;
+    int posDropped;
     bool mustDelete;
     bool found;
     int perc;
@@ -872,6 +873,7 @@ void Solver3()
 //        for (int pc = startIdx; pc < commonArr.getNum(); pc++)
         newPos = nullptr;
         posFounded = 0;
+        posDropped = 0;
         for (int pc = startIdx; pc < startIdx + posCount; pc++)
         {
             perc = (pc - startIdx) / (posCount / 100.0);
@@ -925,6 +927,7 @@ void Solver3()
                                         mustDelete = true;
                                         break;
                                     }
+                            if (mustDelete) posDropped++;
                             if (mustDelete) delete newPos; else
                             {
                                 //добавляем в массив
@@ -969,6 +972,7 @@ void Solver3()
                                         mustDelete = true;
                                         break;
                                     }
+                            if (mustDelete) posDropped++;
                             if (mustDelete) delete newPos; else
                             {
                                 //добавляем в массив
@@ -1013,6 +1017,7 @@ void Solver3()
                                         mustDelete = true;
                                         break;
                                     }
+                            if (mustDelete) posDropped++;
                             if (mustDelete) delete newPos; else
                             {
                                 //добавляем в массив
@@ -1057,6 +1062,7 @@ void Solver3()
                                         mustDelete = true;
                                         break;
                                     }
+                            if (mustDelete) posDropped++;
                             if (mustDelete) delete newPos; else
                             {
                                 //добавляем в массив
@@ -1074,7 +1080,7 @@ void Solver3()
         //надо модифицировать стартовые переменные
         startIdx = startIdx + posCount;
         posCount = posFounded;
-        std::cout << "new pos founded - " << posFounded << std::endl;
+        std::cout << "new: pos founded - " << posFounded << ", dropped - " << posDropped << ", tolal - " << posFounded+posDropped << std::endl;
     }
     std::cout << "Can't found for " << (int)MAX_ITERATIONS << " iterations" << std::endl;
 endsolver3:
