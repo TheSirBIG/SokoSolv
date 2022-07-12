@@ -13,11 +13,13 @@
 // 128 - человек (не использую, ввел переменную позиции)
 //#define MAX_X  7         // включая стены по периметру!!!
 //#define MAX_Y  7         // включая стены по периметру!!!
-#define MAX_X  6         // включая стены по периметру!!!
-#define MAX_Y  6         // включая стены по периметру!!!
-#define NUM_OF_CRATE 2
+//#define MAX_X  6         // включая стены по периметру!!!
+//#define MAX_Y  6         // включая стены по периметру!!!
+#define MAX_X  7         // включая стены по периметру!!!
+#define MAX_Y  8         // включая стены по периметру!!!
+#define NUM_OF_CRATE 8
 #define MAX_POS (NUM_OF_CRATE*4)
-#define MAX_ITERATIONS 50
+#define MAX_ITERATIONS 100
 
 typedef struct
 {
@@ -830,19 +832,33 @@ void Solver2(posType2* pos, int iteration)
     //цикл по всем записанным позициям, рекурсия с увеличением итерации
 }
 
+bool ifInConer(posType3* pos, int x, int y)
+{
+    bool u, d, l, r;
+
+    u = (pos->pos[y - 1][x] == 255);
+    d = (pos->pos[y + 1][x] == 255);
+    l = (pos->pos[y][x - 1] == 255);
+    r = (pos->pos[y][x + 1] == 255);
+
+    return ((l && u) || (u && r) || (r && d) || (d && l));
+}
+
 //идея - без рекурсии, сначала построить все позиции от стартовой, проверить их на финальные, удалить имеющиеся (или просто не добавлять)
 // затем цикл по всем этим позициям, строить кучу новых, проверка их на финальные, удалить имеющиеся (или просто не добавлять)
 // и т.д.
 // плюс - сразу будет найден самый короткий путь
-// минус - много памяти потребует???
+// минус - много памяти потребует??? - вроде, значительно меньше, чем 2-й вариант
 void Solver3()
 {
     posType3* pos;
     posType3* newPos;
-    openArray<posType3*> commonArr(500);
+    openArray<posType3*> commonArr(200);
     int startIdx, posCount;
     int posFounded;
     bool mustDelete;
+    bool found;
+    int perc;
 
     commonArr.put(&startPos3);
     startIdx = 0;
@@ -851,11 +867,17 @@ void Solver3()
     for (int ccc = 0; ccc < MAX_ITERATIONS; ccc++)
     {
         //цикл по последним позициям
-//        for (int pc = startIdx; pc <= commonArr.getNum(); pc++)
-        for (int pc = startIdx; pc <= startIdx + posCount; pc++)
+        std::cout << "Ineration - " << ccc << std::endl;
+        std::cout << "[ 0% ]";
+//        for (int pc = startIdx; pc < commonArr.getNum(); pc++)
+        newPos = nullptr;
+        posFounded = 0;
+        for (int pc = startIdx; pc < startIdx + posCount; pc++)
         {
+            perc = (pc - startIdx) / (posCount / 100.0);
+            std::cout << (char)0x08 << (char)0x08 << (char)0x08 << (char)0x08 << (char)0x08 << (char)0x08 << (char)0x08;
+            std::cout << "[ " << perc << "% ]";
             pos = commonArr.get(pc);
-            posFounded = 0;
             //цикл по количеству ящиков
             //т.к. все крайние ячейки - это стены, в цикле иду с 1 до MAX-1
             for (int i = 1; i < MAX_Y-1; i++)
@@ -867,6 +889,7 @@ void Solver3()
                         if (canCrateLeft(pos, j, i))
                         {
                             mustDelete = false;
+                            found = false;
                             newPos = createNewPos(pos);
                             newPos->pos[i][j - 1] = newPos->pos[i][j - 1] ^ 0x01; //новое место ящика
                             newPos->pos[i][j] = newPos->pos[i][j] ^ 0x01; //старое место ящика
@@ -875,22 +898,161 @@ void Solver3()
                             newPos->dir = 'L';
                             newPos->craftWasMoved.x = j;
                             newPos->craftWasMoved.y = i;
+                            /*
                             //если ящик в новом месте нельзя сдвинуть, и он не на маркере - эта позиция удаляется
                             if (!((canCrateDown(newPos, j - 1, i) || canCrateLeft(newPos, j - 1, i) || canCrateRight(newPos, j - 1, i) || canCrateUp(newPos, j - 1, i))))
                                 if (newPos->pos[i][j - 1] != 9)
-                                    mustDelete = true;
+                                    mustDelete = true;*/
+                            //так не пойдет, может отсечь нормальные ситуации
+                            // теперь удалять только если в углу (оттуда 100% нельзя сдвинуть никуда) и не на маркере
+                            if(ifInConer(newPos,j-1,i))
+                                if (newPos->pos[i][j - 1] != 9)
+                                    mustDelete = true; 
                             //проверка на финальную позицию
                             if(!mustDelete)
                                 if (ifPosFinal(newPos))
                                 {
                                     std::cout << "found!!!" << std::endl;
+                                    found = true;
                                     goto endsolver3;
                                 }
                             //проверка на существующую позицию, поиск по всем предыдущим
                             //новые, возможно, не надо включать в поиск??? пока не очевидно
                             if(!mustDelete)
                                 for (int k = 0; k < startIdx + posCount + posFounded; k++)
-                                    if (ifPosIdentifical(commonArr.get(k), pos))
+                                    if (ifPosIdentifical(commonArr.get(k), newPos))
+                                    {
+                                        mustDelete = true;
+                                        break;
+                                    }
+                            if (mustDelete) delete newPos; else
+                            {
+                                //добавляем в массив
+                                commonArr.put(newPos);
+                                posFounded++;
+                            }
+                        }
+                        if (canCrateRight(pos, j, i))
+                        {
+                            mustDelete = false;
+                            found = false;
+                            newPos = createNewPos(pos);
+                            newPos->pos[i][j + 1] = newPos->pos[i][j + 1] ^ 0x01; //новое место ящика
+                            newPos->pos[i][j] = newPos->pos[i][j] ^ 0x01; //старое место ящика
+                            newPos->manPos.x = j - 1;
+                            newPos->manPos.y = i;
+                            newPos->dir = 'R';
+                            newPos->craftWasMoved.x = j;
+                            newPos->craftWasMoved.y = i;
+                            /*
+                            //если ящик в новом месте нельзя сдвинуть, и он не на маркере - эта позиция удаляется
+                            if (!((canCrateDown(newPos, j + 1, i) || canCrateLeft(newPos, j + 1, i) || canCrateRight(newPos, j + 1, i) || canCrateUp(newPos, j + 1, i))))
+                                if (newPos->pos[i][j + 1] != 9)
+                                    mustDelete = true;*/
+                            if (ifInConer(newPos, j + 1, i))
+                                if (newPos->pos[i][j + 1] != 9)
+                                    mustDelete = true;
+                            //проверка на финальную позицию
+                            if (!mustDelete)
+                                if (ifPosFinal(newPos))
+                                {
+                                    std::cout << "found!!!" << std::endl;
+                                    found = true;
+                                    goto endsolver3;
+                                }
+                            //проверка на существующую позицию, поиск по всем предыдущим
+                            //новые, возможно, не надо включать в поиск??? пока не очевидно
+                            if (!mustDelete)
+                                for (int k = 0; k < startIdx + posCount + posFounded; k++)
+                                    if (ifPosIdentifical(commonArr.get(k), newPos))
+                                    {
+                                        mustDelete = true;
+                                        break;
+                                    }
+                            if (mustDelete) delete newPos; else
+                            {
+                                //добавляем в массив
+                                commonArr.put(newPos);
+                                posFounded++;
+                            }
+                        }
+                        if (canCrateUp(pos, j, i))
+                        {
+                            mustDelete = false;
+                            found = false;
+                            newPos = createNewPos(pos);
+                            newPos->pos[i - 1][j] = newPos->pos[i - 1][j] ^ 0x01; //новое место ящика
+                            newPos->pos[i][j] = newPos->pos[i][j] ^ 0x01; //старое место ящика
+                            newPos->manPos.x = j;
+                            newPos->manPos.y = i + 1;
+                            newPos->dir = 'U';
+                            newPos->craftWasMoved.x = j;
+                            newPos->craftWasMoved.y = i;
+                            /*
+                            //если ящик в новом месте нельзя сдвинуть, и он не на маркере - эта позиция удаляется
+                            if (!((canCrateDown(newPos, j, i - 1) || canCrateLeft(newPos, j, i - 1) || canCrateRight(newPos, j, i - 1) || canCrateUp(newPos, j, i - 1))))
+                                if (newPos->pos[i - 1][j] != 9)
+                                    mustDelete = true;*/
+                            if (ifInConer(newPos, j, i - 1))
+                                if (newPos->pos[i - 1][j] != 9)
+                                    mustDelete = true;
+                            //проверка на финальную позицию
+                            if (!mustDelete)
+                                if (ifPosFinal(newPos))
+                                {
+                                    std::cout << "found!!!" << std::endl;
+                                    found = true;
+                                    goto endsolver3;
+                                }
+                            //проверка на существующую позицию, поиск по всем предыдущим
+                            //новые, возможно, не надо включать в поиск??? пока не очевидно
+                            if (!mustDelete)
+                                for (int k = 0; k < startIdx + posCount + posFounded; k++)
+                                    if (ifPosIdentifical(commonArr.get(k), newPos))
+                                    {
+                                        mustDelete = true;
+                                        break;
+                                    }
+                            if (mustDelete) delete newPos; else
+                            {
+                                //добавляем в массив
+                                commonArr.put(newPos);
+                                posFounded++;
+                            }
+                        }
+                        if (canCrateDown(pos, j, i))
+                        {
+                            mustDelete = false;
+                            found = false;
+                            newPos = createNewPos(pos);
+                            newPos->pos[i + 1][j] = newPos->pos[i + 1][j] ^ 0x01; //новое место ящика
+                            newPos->pos[i][j] = newPos->pos[i][j] ^ 0x01; //старое место ящика
+                            newPos->manPos.x = j;
+                            newPos->manPos.y = i - 1;
+                            newPos->dir = 'D';
+                            newPos->craftWasMoved.x = j;
+                            newPos->craftWasMoved.y = i;
+                            /*
+                            //если ящик в новом месте нельзя сдвинуть, и он не на маркере - эта позиция удаляется
+                            if (!((canCrateDown(newPos, j, i + 1) || canCrateLeft(newPos, j, i + 1) || canCrateRight(newPos, j, i + 1) || canCrateUp(newPos, j, i + 1))))
+                                if (newPos->pos[i + 1][j] != 9)
+                                    mustDelete = true;*/
+                            if (ifInConer(newPos, j, i + 1))
+                                if (newPos->pos[i + 1][j] != 9)
+                                    mustDelete = true;
+                            //проверка на финальную позицию
+                            if (!mustDelete)
+                                if (ifPosFinal(newPos))
+                                {
+                                    std::cout << "found!!!" << std::endl;
+                                    found = true;
+                                    goto endsolver3;
+                                }
+                            //проверка на существующую позицию, поиск по всем предыдущим
+                            //новые, возможно, не надо включать в поиск??? пока не очевидно
+                            if (!mustDelete)
+                                for (int k = 0; k < startIdx + posCount + posFounded; k++)
+                                    if (ifPosIdentifical(commonArr.get(k), newPos))
                                     {
                                         mustDelete = true;
                                         break;
@@ -906,41 +1068,59 @@ void Solver3()
             //прошли цикл по всем полям в поисках ящиков
             //заполнили новые позиции
         }
+        std::cout << std::endl;
         //прошли все новые позиции, там все заполнили, что не надо - не заполнили ))
         //переходим на следущую итерацию, т.е. вот на эти все новые
         //надо модифицировать стартовые переменные
         startIdx = startIdx + posCount;
         posCount = posFounded;
+        std::cout << "new pos founded - " << posFounded << std::endl;
     }
     std::cout << "Can't found for " << (int)MAX_ITERATIONS << " iterations" << std::endl;
 endsolver3:
+    if (found)
+    {
+        posType3* pt;
+
+        pt = newPos;
+        std::cout << "back solver:" << std::endl;
+        while (pt != &startPos3)
+        {
+            std::cout << (int)pt->craftWasMoved.x+1 << "," << (int)pt->craftWasMoved.y+1 << "," << pt->dir << std::endl;
+            pt = pt->prev;
+        }
+
+        delete newPos;
+    }
     //удалить все созданные позиции
     for (int i = 1; i < commonArr.getNum(); i++)
         delete commonArr.get(i);
 }
 void createInitPos()
 {
-//    byte dummyPos[MAX_Y][MAX_X] = { {255, 255, 255, 255, 255, 255, 255},
-//                                    {255, 0,   0,   0,   0,   255, 255},
-//                                    {255, 1,   1,   9,   0,   0,   255},
-//                                    {255, 8,   8,   0,   8,   8,   255},
-//                                    {255, 0,   0,   9,   1,   1,   255},
-//                                    {255, 255, 0,   0,   0,   0,   255},
-//                                    {255, 255, 255, 255, 255, 255, 255} };
-//    byte dummyPos[MAX_Y][MAX_X] = { {255, 255, 255, 255, 255, 255, 255, 255},
-//                                    {255, 255, 255, 8,   255, 255, 255, 255},
-//                                    {255, 255, 255, 1,   255, 255, 255, 255},
-//                                    {255, 255, 255, 0,   0,   1,   8,   255},
-//                                    {255, 8,   1,   0,   0,   255, 255, 255},
-//                                    {255, 255, 255, 255, 1,   255, 255, 255},
-//                                    {255, 255, 255, 255, 8,   255, 255, 255},
-//                                    {255, 255, 255, 255, 255, 255, 255, 255} };
-    byte dummyPos[MAX_Y][MAX_X] = { {255, 255, 255, 255, 255, 255},
-                                    {255, 8,   0,   0,   8,   255},
-                                    {255, 0,   0,   0,   0,   255},
-                                    {255, 0,   1,   0,   1,   255},
-                                    {255, 255, 0,   0,   0,   255},
-                                    {255, 255, 255, 255, 255, 255} };
+/*    byte dummyPos[MAX_Y][MAX_X] = {{255, 255, 255, 255, 255, 255, 255, 255, 255},
+                                    {255, 255, 0,   0,   0,   255, 255, 255, 255},
+                                    {255, 255, 0,   255, 1,   0,   0,   255, 255},
+                                    {255, 0,   9,   8,   0,   8,   0,   255, 255},
+                                    {255, 0,   0,   1,   1,   0,   255, 255, 255},
+                                    {255, 255, 255, 0,   255, 8,   255, 255, 255},
+                                    {255, 255, 255, 0,   0,   0,   255, 255, 255},
+                                    {255, 255, 255, 255, 255, 255, 255, 255, 255} };*/
+    byte dummyPos[MAX_Y][MAX_X] = {{255, 255, 255, 255, 255, 255, 255},
+                                    {255, 8,   8,   1,   8,   8,   255},
+                                    {255, 8,   8,   255, 8,   8,   255},
+                                    {255, 0,   1,   1,   1,   0,   255},
+                                    {255, 0,   0,   1,   0,   0,   255},
+                                    {255, 0,   1,   1,   1,   0,   255},
+                                    {255, 0,   0,   255, 0,   0,   255},
+                                    {255, 255, 255, 255, 255, 255, 255} }; //7,8,8,4,6   
+/*    byte dummyPos[MAX_Y][MAX_X] = {{255, 255, 255, 255, 255, 255},
+                                   {255, 8,   0,   0,   8,   255},
+                                   {255, 0,   0,   0,   0,   255},
+                                   {255, 0,   1,   1,   0,   255},
+                                   {255, 255, 0,   0,   0,   255},
+                                   {255, 255, 255, 255, 255, 255} };*/
+                                
     for (int i = 0; i < MAX_Y; i++)
         for (int j = 0; j < MAX_X; j++) startPos.pos[i][j] = dummyPos[i][j];
     startPos.manPos.x = 3;
@@ -953,8 +1133,8 @@ void createInitPos()
 
     for (int i = 0; i < MAX_Y; i++)
         for (int j = 0; j < MAX_X; j++) startPos3.pos[i][j] = dummyPos[i][j];
-    startPos3.manPos.x = 3;
-    startPos3.manPos.y = 3;
+    startPos3.manPos.x = 4;
+    startPos3.manPos.y = 6;
     startPos3.prev = nullptr;
 }
 
@@ -986,7 +1166,7 @@ int main()
     Solver3();
 
     clearManHist();
-    clearPos(&startPos);
+//    clearPos(&startPos);
 }
 
 // Запуск программы: CTRL+F5 или меню "Отладка" > "Запуск без отладки"

@@ -81,7 +81,7 @@ T openArray<T>::get(int idx)
 	baseStruct* bs;
 
 	bs = baseAddr;
-	for (int i = 0; i < curIdx / minLen; i++)
+	for (int i = 0; i < idx / minLen; i++)
 		bs = bs->next;
-	return bs->mas[curIdx % minLen];
+	return bs->mas[idx % minLen];
 }
