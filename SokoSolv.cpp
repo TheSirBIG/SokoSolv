@@ -26,41 +26,17 @@ typedef struct
     byte x, y;
 } manPosType;
 
-/*
 typedef struct _posType
 {
     byte pos[MAX_Y][MAX_X];
     _posType* prev;
-    _posType* next;
     manPosType manPos;
-    manPosType craftWasMoved;
+    manPosType craftWasMoved; //в этой записи - позоция ящика и куда сдвигали из позиции prev, чтобы прийти в эту!!!
     char dir;   //L,R,U,D
 } posType;
-*/
-typedef struct _posType2
-{
-    byte pos[MAX_Y][MAX_X];
-    _posType2* prev;
-    _posType2* next[MAX_POS];
-    manPosType manPos;
-    manPosType craftWasMoved; //в этой записи - позоция ящика и куда сдвигали из позиции prev, чтобы прийти в эту!!!
-    char dir;   //L,R,U,D
-} posType2;
 
-typedef struct _posType3
-{
-    byte pos[MAX_Y][MAX_X];
-    _posType3* prev;
-    manPosType manPos;
-    manPosType craftWasMoved; //в этой записи - позоция ящика и куда сдвигали из позиции prev, чтобы прийти в эту!!!
-    char dir;   //L,R,U,D
-} posType3;
-
-openArray<posType2*> arr(100);
 // стартовая позиция
-//posType startPos;
-posType2 startPos;
-posType3 startPos3;
+posType startPos;
 
 typedef struct _manHistType
 {
@@ -121,33 +97,12 @@ bool checkManHist(manPosType pos)
 }
 
 // каждая новая позиция содержит координаты ящика, который двигали, и направление сдвига, человек при этом в месте для требуемого сдвига ящика
-
-//posType* createNewPos(posType* parent)
-posType2* createNewPos(posType2* parent)
-{
-//    parent->next = new posType;
-//    (parent->next)->next = nullptr;
-//    (parent->next)->prev = parent;
-    posType2* curnew = new posType2;
-    for (int i = 0; i < MAX_POS; i++)
-        curnew->next[i] = nullptr;
-    curnew->prev = parent;
-    //копирование массива данных
-    for (int i = 0; i < MAX_Y; i++)
-        for (int j = 0; j < MAX_X; j++)
-            //            (parent->next)->pos[i][j] = parent->pos[i][j];
-            curnew->pos[i][j] = parent->pos[i][j];
-    return curnew;
-              
-//    return parent->next;
-}
-
-posType3* createNewPos(posType3* parent)
+posType* createNewPos(posType* parent)
 {
     // parent->next = new posType;
     //    (parent->next)->next = nullptr;
     //    (parent->next)->prev = parent;
-    posType3* curnew = new posType3;
+    posType* curnew = new posType;
 //    for (int i = 0; i < MAX_POS; i++)
 //        curnew->next[i] = nullptr;
     curnew->prev = parent;
@@ -161,151 +116,10 @@ posType3* createNewPos(posType3* parent)
     //    return parent->next;
 }
 
-//void deletePos(posType* current)
-//{
-//    (current->prev)->next = nullptr;
-//    delete current;
-//}
-
-//void clearPos()
-void clearPos(posType2* pos)
-{
-//    posType* addr;
-
-    for (int i = 0; i < MAX_POS; i++)
-        if (pos->next[i] != nullptr) clearPos(pos->next[i]);
-    if(pos != &startPos) delete pos;
-
-/*
-    //    if (manHist.next == nullptr) exit;
-    while (startPos.next != nullptr)
-    {
-        addr = startPos.next;
-        while (addr->next != nullptr) addr = addr->next;
-        (addr->prev)->next = nullptr;
-        delete addr;
-    }
-*/
-}
-
 // m - направление предыдущего сдвига, только для внутренней рекурсии (чтобы избежать зацикливания)
 // '0' - самое начало
 // не совсем помогает - нужно также держать историю, и отказывать, если приходит на существующие позиции
-//bool canManMove(posType* curPos, manPosType src, manPosType dest, char m, manHistType* mh)
-bool canManMove(posType2* curPos, manPosType src, manPosType dest, char m, manHistType* mh)
-{
-    static int qqq = 0;
-    bool retval = false;
-    manPosType a;
-
-    if (m == '0')
-    {
-//        qqq++;
-//        if (qqq == 25)
-//        {
-//            std::cout << "unknown fail" << std::endl;
-//        }
-//        if (qqq == 35)
-//        {
-//            std::cout << "here stack overflow" << std::endl;
-//        }
-        clearManHist();
-        manHist.x = src.x;
-        manHist.y = src.y;
-    };
-
-//    std::cout << qqq++ << std::endl;
-//    if (qqq == 25)
-//    {
-//        std::cout << "unknown fail" << std::endl;
-//    }
-
-    if (curPos->pos[src.y][src.x] == 255) return false;
-    if (curPos->pos[src.y][src.x] == 1) return false;
-    if (curPos->pos[src.y][src.x] == 9) return false;
-    if (curPos->pos[dest.y][dest.x] == 255) return false;
-    if (curPos->pos[dest.y][dest.x] == 1) return false;
-    if (curPos->pos[dest.y][dest.x] == 9) return false;
-    if ((dest.x == src.x) && (dest.y == src.y)) return true;
-    //left
-    if (((curPos->pos[src.y][src.x - 1] == 0) || (curPos->pos[src.y][src.x - 1] == 8)) && (m != 'R'))
-    {
-           a.x = src.x - 1;
-           a.y = src.y;
-           if (checkManHist(a))
-           {
-               addNewManHist(mh);
-               (mh->next)->x = a.x;
-               (mh->next)->y = a.y;
-               (mh->next)->prev = mh;
-               retval = canManMove(curPos, a, dest, 'L', mh->next);
-               if (retval) return true;
-           }
-           else
-           {
-//               deleteLastManHist();
-           }
-    }
-    //right
-    if (((curPos->pos[src.y][src.x + 1] == 0) || (curPos->pos[src.y][src.x + 1] == 8)) && (m != 'L'))
-    {
-        a.x = src.x + 1;
-        a.y = src.y;
-        if (checkManHist(a))
-        {
-            addNewManHist(mh);
-            (mh->next)->x = a.x;
-            (mh->next)->y = a.y;
-            (mh->next)->prev = mh;
-            retval = canManMove(curPos, a, dest, 'R', mh->next);
-            if (retval) return true;
-        }
-        else
-        {
-//            deleteLastManHist();
-        }
-    }
-    //up
-    if (((curPos->pos[src.y - 1][src.x] == 0) || (curPos->pos[src.y - 1][src.x] == 8)) && (m != 'D'))
-    {
-        a.x = src.x;
-        a.y = src.y - 1;
-        if (checkManHist(a))
-        {
-            addNewManHist(mh);
-            (mh->next)->x = a.x;
-            (mh->next)->y = a.y;
-            (mh->next)->prev = mh;
-            retval = canManMove(curPos, a, dest, 'U', mh->next);
-            if (retval) return true;
-        }
-        else
-        {
-//            deleteLastManHist();
-        }
-    }
-    //down
-    if (((curPos->pos[src.y + 1][src.x] == 0) || (curPos->pos[src.y + 1][src.x] == 8)) && (m != 'U'))
-    {
-        a.x = src.x;
-        a.y = src.y + 1;
-        if (checkManHist(a))
-        {
-            addNewManHist(mh);
-            (mh->next)->x = a.x;
-            (mh->next)->y = a.y;
-            (mh->next)->prev = mh;
-            retval = canManMove(curPos, a, dest, 'D', mh->next);
-            if (retval) return true;
-        }
-        else
-        {
-//            deleteLastManHist();
-        }
-    }
-    return(retval);
-}
-bool canManMove(posType3* curPos, manPosType src, manPosType dest, char m, manHistType* mh)
+bool canManMove(posType* curPos, manPosType src, manPosType dest, char m, manHistType* mh)
 {
     static int qqq = 0;
     bool retval = false;
@@ -420,15 +234,7 @@ bool canManMove(posType3* curPos, manPosType src, manPosType dest, char m, manHi
 }
 
 // x,y - координаты ящика для сдвига
-bool canCrateLeft(posType2* pos, byte x, byte y)
-{
-    manPosType a;
-
-    a.x = x + 1;
-    a.y = y;
-    return(((pos->pos[y][x-1] == 0) || (pos->pos[y][x - 1] == 8)) && canManMove(pos, pos->manPos, a, '0', &manHist));
-}
-bool canCrateLeft(posType3* pos, byte x, byte y)
+bool canCrateLeft(posType* pos, byte x, byte y)
 {
     manPosType a;
 
@@ -436,15 +242,7 @@ bool canCrateLeft(posType3* pos, byte x, byte y)
     a.y = y;
     return(((pos->pos[y][x - 1] == 0) || (pos->pos[y][x - 1] == 8)) && canManMove(pos, pos->manPos, a, '0', &manHist));
 }
-bool canCrateRight(posType2* pos, byte x, byte y)
-{
-manPosType a;
-
-a.x = x - 1;
-a.y = y;
-return(((pos->pos[y][x + 1] == 0) || (pos->pos[y][x + 1] == 8)) && canManMove(pos, pos->manPos, a, '0', &manHist));
-}
-bool canCrateRight(posType3* pos, byte x, byte y)
+bool canCrateRight(posType* pos, byte x, byte y)
 {
     manPosType a;
 
@@ -452,7 +250,7 @@ bool canCrateRight(posType3* pos, byte x, byte y)
     a.y = y;
     return(((pos->pos[y][x + 1] == 0) || (pos->pos[y][x + 1] == 8)) && canManMove(pos, pos->manPos, a, '0', &manHist));
 }
-bool canCrateUp(posType2* pos, byte x, byte y)
+bool canCrateUp(posType* pos, byte x, byte y)
 {
     manPosType a;
 
@@ -460,23 +258,7 @@ bool canCrateUp(posType2* pos, byte x, byte y)
     a.y = y + 1;
     return(((pos->pos[y - 1][x] == 0) || (pos->pos[y - 1][x] == 8)) && canManMove(pos, pos->manPos, a, '0', &manHist));
 }
-bool canCrateUp(posType3* pos, byte x, byte y)
-{
-    manPosType a;
-
-    a.x = x;
-    a.y = y + 1;
-    return(((pos->pos[y - 1][x] == 0) || (pos->pos[y - 1][x] == 8)) && canManMove(pos, pos->manPos, a, '0', &manHist));
-}
-bool canCrateDown(posType2* pos, byte x, byte y)
-{
-    manPosType a;
-
-    a.x = x;
-    a.y = y - 1;
-    return(((pos->pos[y + 1][x] == 0) || (pos->pos[y + 1][x] == 8)) && canManMove(pos, pos->manPos, a, '0', &manHist));
-}
-bool canCrateDown(posType3* pos, byte x, byte y)
+bool canCrateDown(posType* pos, byte x, byte y)
 {
     manPosType a;
 
@@ -485,14 +267,7 @@ bool canCrateDown(posType3* pos, byte x, byte y)
     return(((pos->pos[y + 1][x] == 0) || (pos->pos[y + 1][x] == 8)) && canManMove(pos, pos->manPos, a, '0', &manHist));
 }
 
-bool ifPosFinal(posType2* pos)
-{
-    for (int i = 0; i < MAX_Y; i++)
-        for (int j = 0; j < MAX_X; j++)
-            if (pos->pos[i][j] == 1) return false;
-    return true;
-}
-bool ifPosFinal(posType3* pos)
+bool ifPosFinal(posType* pos)
 {
     for (int i = 0; i < MAX_Y; i++)
         for (int j = 0; j < MAX_X; j++)
@@ -500,27 +275,7 @@ bool ifPosFinal(posType3* pos)
     return true;
 }
 
-bool ifPosIdentifical(posType2* a1, posType2* a2, bool man = true)
-{
-    //man - проверять ли положение человека на соответствие
-    bool retval = true;
-
-    for (int i = 0; i < MAX_Y; i++)
-        for (int j = 0; j < MAX_X; j++)
-            if (a1->pos[i][j] != a2->pos[i][j]) return false;
-    if (man)
-    {
-        //все ящики стоят идентично, надо проверить положение человека
-//        if ((a1->manPos.x != a2->manPos.x) || (a1->manPos.y != a2->manPos.y)) retval = false;
-        // не сравнивать, а проверить, можно ли прийти из а1 в а2
-        manPosType src, dest;
-        src = a1->manPos;
-        dest = a2->manPos;
-        retval = canManMove(a1, src, dest, '0', &manHist);
-    }
-    return retval;
-}
-bool ifPosIdentifical(posType3* a1, posType3* a2, bool man = true)
+bool ifPosIdentifical(posType* a1, posType* a2, bool man = true)
 {
     //man - проверять ли положение человека на соответствие
     bool retval = true;
@@ -541,298 +296,7 @@ bool ifPosIdentifical(posType3* a1, posType3* a2, bool man = true)
     return retval;
 }
 
-// проверка, не содержится ли данная позиция уже в списке (чтобы избежать зацикливания)
-// эта позиция должна быть последней в списке
-//bool ifPosExisting(posType* pos)
-//{
-//    bool retval = false;
-//    posType* addr;
-//
-//    if (pos == &startPos) return false;
-//    addr = startPos.next;
-//    while (addr != pos)
-//    {
-//        retval = ifPosIdentifical(addr, pos, true);
-//        if (retval) break;
-//        addr = addr->next;
-//    }
-//    return retval;
-//}
-
-//очень долго и оооочень много памяти жрет
-//и что-то не очень работает, буду другую думать
-/*
-void Solver(posType* pos)
-{
-    posType* addr;
-    bool canMove;
-    int qqq;
-
-//печать позиции в файл
-//
-//    for (int i = 0; i < MAX_Y; i++)
-//    {
-//        for (int j = 0; j < MAX_X; j++)
-//        {
-//            switch (pos->pos[i][j])
-//            {
-//            case 1:
-//                std::cout << "1";
-//                break;
-//            case 8:
-//                std::cout << "o";
-//                break;
-//            case 9:
-//                std::cout << "O";
-//                break;
-//            case 0:
-//                std::cout << " ";
-//                break;
-//            default:
-//                std::cout << "X";
-//            }
-//        }
-//        std::cout << std::endl;
-//    }
-
-    //пришла новая позиция, проверить идентичность, если да - то удалить и выйти
-    if (ifPosExisting(pos))
-    {
-        deletePos(pos);
-//        std::cout << "deleting" << std::endl;
-        return;
-    }
-    //проверить на финальную позицию, пока вывести в терминал путь
-    // затем удалить и выйти - чтобы найти возможно более короткий путь
-    if (ifPosFinal(pos))
-    {
-        std::cout << "path found:" << std::endl;
-        addr = startPos.next;
-        qqq = 1;
-        while (addr != pos)
-        {
-            std::cout << (int)addr->craftWasMoved.x << "," << (int)addr->craftWasMoved.y << "," << addr->dir << std::endl;
-            addr = addr->next;
-            qqq++;
-        }
-        std::cout << (int)addr->craftWasMoved.x << "," << (int)addr->craftWasMoved.y << "," << addr->dir << std::endl;
-        //deletePos(pos);
-        std::cout << "total " << qqq << std::endl;
-//        std::cin >> qqq;
-        goto commonExit;
-    }
-    //цикл по всем ящикам
-    //проверить на возможные движения, если можно - создать новую позицию, заполнить поля ящика и направления, рекурсия
-    //если ни одного движения нет - удалить, выход ??????
-    // возможно - после всех движений всех ящиков удалить и выйти???
-    canMove = false;
-    for (int i = 1; i < MAX_Y-1; i++)
-        for (int j = 1; j < MAX_X-1; j++)
-        {
-            if ((pos->pos[i][j] == 1) || (pos->pos[i][j] == 9))
-            {
-                if (canCrateDown(pos, j, i) || canCrateLeft(pos, j, i) || canCrateRight(pos, j, i) || canCrateUp(pos, j, i))
-                {
-//                    std::cout << "try left" << std::endl;
-                    if (canCrateLeft(pos, j, i))
-                    {
-                        addr = createNewPos(pos);
-                        addr->pos[i][j - 1] = addr->pos[i][j - 1] ^ 0x01; //новое место
-                        addr->pos[i][j] = addr->pos[i][j] ^ 0x01; //старое место
-                        addr->manPos.x = j + 1;
-                        addr->manPos.y = i;
-                        addr->dir = 'L';
-                        addr->craftWasMoved.x = j;
-                        addr->craftWasMoved.y = i;
-                        //если ящик в новом месте нельзя сдвинуть, и он не на маркере - эта позиция удаляется, и рекурсия не вызывается
-                        //т.е. рекурсия - когда на маркере и нельзя сдвинуть, или можно сдвинуть
-                        if (canCrateDown(addr, j - 1, i) || canCrateLeft(addr, j - 1, i) || canCrateRight(addr, j - 1, i) || canCrateUp(addr, j - 1, i))
-                        {
-                            Solver(addr);
-                        }
-                        else
-                            if (addr->pos[i][j - 1] == 9)
-                            {
-                                Solver(addr);
-                            }
-                            else
-                            {
-                                delete addr;
-                                pos->next = nullptr;
-                            }
-                    }
-//                    std::cout << "try right" << std::endl;
-                    if (canCrateRight(pos, j, i))
-                    {
-                        addr = createNewPos(pos);
-                        addr->pos[i][j + 1] = addr->pos[i][j + 1] ^ 0x01; //новое место
-                        addr->pos[i][j] = addr->pos[i][j] ^ 0x01; //старое место
-                        addr->manPos.x = j - 1;
-                        addr->manPos.y = i;
-                        addr->dir = 'R';
-                        addr->craftWasMoved.x = j;
-                        addr->craftWasMoved.y = i;
-                        //если ящик в новом месте нельзя сдвинуть, и он не на маркере - эта позиция удаляется, и рекурсия не вызывается
-                        //т.е. рекурсия - когда на маркере и нельзя сдвинуть, или можно сдвинуть
-                        if (canCrateDown(addr, j + 1, i) || canCrateLeft(addr, j + 1, i) || canCrateRight(addr, j + 1, i) || canCrateUp(addr, j + 1, i))
-                        {
-                            Solver(addr);
-                        }
-                        else
-                            if (addr->pos[i][j + 1] == 9)
-                            {
-                                Solver(addr);
-                            }
-                            else
-                            {
-                                delete addr;
-                                pos->next = nullptr;
-                            }
-                    }
-//                    std::cout << "try up" << std::endl;
-                    if (canCrateUp(pos, j, i))
-                    {
-                        addr = createNewPos(pos);
-                        addr->pos[i - 1][j] = addr->pos[i - 1][j] ^ 0x01; //новое место
-                        addr->pos[i][j] = addr->pos[i][j] ^ 0x01; //старое место
-                        addr->manPos.x = j;
-                        addr->manPos.y = i + 1;
-                        addr->dir = 'U';
-                        addr->craftWasMoved.x = j;
-                        addr->craftWasMoved.y = i;
-                        //если ящик в новом месте нельзя сдвинуть, и он не на маркере - эта позиция удаляется, и рекурсия не вызывается
-                        //т.е. рекурсия - когда на маркере и нельзя сдвинуть, или можно сдвинуть
-                        if (canCrateDown(addr, j, i - 1) || canCrateLeft(addr, j, i - 1) || canCrateRight(addr, j, i - 1) || canCrateUp(addr, j, i - 1))
-                        {
-                            Solver(addr);
-                        }
-                        else
-                            if (addr->pos[i-1][j] == 9)
-                            {
-                                Solver(addr);
-                            }
-                            else
-                            {
-                                delete addr;
-                                pos->next = nullptr;
-                            }
-                    }
-//                    std::cout << "try down" << std::endl;
-                    if (canCrateDown(pos, j, i))
-                    {
-                        addr = createNewPos(pos);
-                        addr->pos[i + 1][j] = addr->pos[i + 1][j] ^ 0x01; //новое место
-                        addr->pos[i][j] = addr->pos[i][j] ^ 0x01; //старое место
-                        addr->manPos.x = j;
-                        addr->manPos.y = i - 1;
-                        addr->dir = 'D';
-                        addr->craftWasMoved.x = j;
-                        addr->craftWasMoved.y = i;
-                        //если ящик в новом месте нельзя сдвинуть, и он не на маркере - эта позиция удаляется, и рекурсия не вызывается
-                        //т.е. рекурсия - когда на маркере и нельзя сдвинуть, или можно сдвинуть
-                        if (canCrateDown(addr, j, i+1) || canCrateLeft(addr, j, i+1) || canCrateRight(addr, j, i+1) || canCrateUp(addr, j, i+1))
-                        {
-                            Solver(addr);
-                        }
-                        else
-                            if (addr->pos[i+1][j] == 9)
-                            {
-                                Solver(addr);
-                            }
-                            else
-                            {
-                                delete addr;
-                                pos->next = nullptr;
-                            }
-                    }
-                }
-                else
-                    if (pos->pos[i][j] != 9)
-                    {
-                        goto commonExit;
-                    }
-            }
-        }
-commonExit:
-    if(pos != &startPos) deletePos(pos);
-}
-*/
-static const int tableFact[] = {1, 1, 2, 6, 24, 120, 720, 5040, 40320, 362880, 3628800, 39916800, 479001600};
-
-/*
-void solver2GeneratePositions()
-{
-    //создание всех возможных позиций, вывод их чиста
-    //убирание явно глухих позиций, вывод числа оставшихся
-    int numSq;
-    int numPos;
-    byte** buf;
-
-    //подсчет числа клеток, где можно разместить ящик
-    numSq = 0;
-    for (int i = 0; i < MAX_Y; i++)
-        for (int j = 0; j < MAX_X; j++)
-            if (startPos.pos[i][j] != 255) numSq++;
-    //подсчет колиества вариантов расположения
-    numPos = tableFact[1];
-    //заготовка массива шаблонов
-    buf = new byte * [1];
-}
-*/
-void prepareSolver2()
-{
-    arr.put(&startPos);
-}
-
-void Solver2(posType2* pos, int iteration)
-{
-    int posFound = 0;
-
-    //если финальная позиция - сообщаем
-    if (ifPosFinal(pos))
-    {
-        //пока что просто нашли
-        std::cout << "final found!!!" << std::endl;
-        std::cout << "solver from back to begin:" << std::endl;
-        posType2* qqq = pos;
-        posType2* qqq1;
-
-        while (qqq != &startPos)
-        {
-            std::cout << (int)qqq->craftWasMoved.x << "," << (int)qqq->craftWasMoved.y << "," << qqq->dir << std::endl;
-            qqq1 = qqq->prev;
-            for(int i=0; i<MAX_POS; i++)
-                if (qqq1->next[i] == qqq)
-                {
-                    qqq = qqq1->next[i];
-                    break;
-                }
-        }
-        std::cout << (int)qqq->craftWasMoved.x << "," << (int)qqq->craftWasMoved.y << "," << qqq->dir << std::endl;
-        //далее можно продолжать, чтобы найти более короткий путь, если есть
-        return;
-    }
-    //если итерация >= MAX_ITERATION - прекращение данной ветки
-    if (iteration >= MAX_ITERATIONS)
-    {
-        std::cout << "max iteration reached" << std::endl;
-        return;
-    }
-    //генерация всех возможных следующих комбинаций из текущей, цикл по количеству ящиков
-    // сразу проверка на существующую позицию, если такой нет - то добавить в arr и в текущую позицию (создать массив для этого?????)
-    // также проверка на финальную стадию
-    for(int i=0; i<MAX_Y; i++)
-        for(int j=0; j<MAX_X; j++)
-            if ((pos->pos[i][j] == 1) || (pos->pos[i][j] == 9))
-            {
-                //ящик найден
-                //проверка на возможные движения
-            }
-
-    //цикл по всем записанным позициям, рекурсия с увеличением итерации
-}
-
-bool ifInConer(posType3* pos, int x, int y)
+bool ifInConer(posType* pos, int x, int y)
 {
     bool u, d, l, r;
 
@@ -849,11 +313,11 @@ bool ifInConer(posType3* pos, int x, int y)
 // и т.д.
 // плюс - сразу будет найден самый короткий путь
 // минус - много памяти потребует??? - вроде, значительно меньше, чем 2-й вариант
-void Solver3()
+void Solver()
 {
-    posType3* pos;
-    posType3* newPos;
-    openArray<posType3*> commonArr(200);
+    posType* pos;
+    posType* newPos;
+    openArray<posType*> commonArr(200);
     int startIdx, posCount;
     int posFounded;
     int posDropped;
@@ -861,7 +325,7 @@ void Solver3()
     bool found;
     int perc;
 
-    commonArr.put(&startPos3);
+    commonArr.put(&startPos);
     startIdx = 0;
     posCount = 1;
     //main cycle
@@ -878,7 +342,7 @@ void Solver3()
         {
             perc = (pc - startIdx) / (posCount / 100.0);
             std::cout << (char)0x08 << (char)0x08 << (char)0x08 << (char)0x08 << (char)0x08 << (char)0x08 << (char)0x08;
-            std::cout << "[ " << perc << "% ]";
+            std::cout << "[ " << perc+1 << "% ]";
             pos = commonArr.get(pc);
             //цикл по количеству ящиков
             //т.к. все крайние ячейки - это стены, в цикле иду с 1 до MAX-1
@@ -1081,16 +545,17 @@ void Solver3()
         startIdx = startIdx + posCount;
         posCount = posFounded;
         std::cout << "new: pos founded - " << posFounded << ", dropped - " << posDropped << ", tolal - " << posFounded+posDropped << std::endl;
+        std::cout << "in history - " << commonArr.getNum() << std::endl;
     }
     std::cout << "Can't found for " << (int)MAX_ITERATIONS << " iterations" << std::endl;
 endsolver3:
     if (found)
     {
-        posType3* pt;
+        posType* pt;
 
         pt = newPos;
         std::cout << "back solver:" << std::endl;
-        while (pt != &startPos3)
+        while (pt != &startPos)
         {
             std::cout << (int)pt->craftWasMoved.x+1 << "," << (int)pt->craftWasMoved.y+1 << "," << pt->dir << std::endl;
             pt = pt->prev;
@@ -1120,52 +585,24 @@ void createInitPos()
                                     {255, 0,   0,   255, 0,   0,   255},
                                     {255, 255, 255, 255, 255, 255, 255} }; //7,8,8,4,6   */
                                 
+    manHist.next = manHist.prev = nullptr;
+
     for (int i = 0; i < MAX_Y; i++)
         for (int j = 0; j < MAX_X; j++) startPos.pos[i][j] = dummyPos[i][j];
     startPos.manPos.x = 3;
     startPos.manPos.y = 3;
-//    startPos.next = startPos.prev = nullptr;
-    manHist.next = manHist.prev = nullptr;
-    for (int i = 0; i < MAX_POS; i++)
-        startPos.next[i] = nullptr;
     startPos.prev = nullptr;
-
-    for (int i = 0; i < MAX_Y; i++)
-        for (int j = 0; j < MAX_X; j++) startPos3.pos[i][j] = dummyPos[i][j];
-    startPos3.manPos.x = 3;
-    startPos3.manPos.y = 3;
-    startPos3.prev = nullptr;
 }
 
 
 int main()
 {
-    manPosType s, d;
-    openArray<byte> qq(200);
-    qq.put(0);
-    openArray<int> a;
-    a.put(0);
-
     std::cout << "This is a test sokovan solver\n";
     std::cout << "Working...\n";
 
     createInitPos();
-    s.x = 4;
-    s.y = 3;
-    d.x = 1;
-    d.y = 3;
-//    std::cout << canManMove(&startPos, s, d, '0', &manHist) << std::endl;
-//    std::cout << canCrateLeft(&startPos, 3, 1) << std::endl;
-//    Solver(&startPos);
-//    solver2GeneratePositions();
-
-//    prepareSolver2();
-//    Solver2(&startPos, 0);
-
-    Solver3();
-
-    clearManHist();
-//    clearPos(&startPos);
+    Solver();
+    clearManHist(); //на всякий случай
 }
 
 // Запуск программы: CTRL+F5 или меню "Отладка" > "Запуск без отладки"
