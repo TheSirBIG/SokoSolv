@@ -15,8 +15,8 @@
 //#define MAX_Y  7         // включая стены по периметру!!!
 //#define MAX_X  6         // включая стены по периметру!!!
 //#define MAX_Y  6         // включая стены по периметру!!!
-#define MAX_X  7         // включая стены по периметру!!!
-#define MAX_Y  7         // включая стены по периметру!!!
+#define MAX_X  8        // включая стены по периметру!!!
+#define MAX_Y  8         // включая стены по периметру!!!
 #define NUM_OF_CRATE 6
 #define MAX_POS (NUM_OF_CRATE*4)
 #define MAX_ITERATIONS 100
@@ -341,7 +341,7 @@ void Solver()
         for (int pc = startIdx; pc < startIdx + posCount; pc++)
         {
             perc = (pc - startIdx) / (posCount / 100.0);
-            std::cout << (char)0x08 << (char)0x08 << (char)0x08 << (char)0x08 << (char)0x08 << (char)0x08 << (char)0x08;
+            for (int qq = 0; qq < 10; qq++) std::cout << (char)0x08;
             std::cout << "[ " << perc+1 << "% ]";
             pos = commonArr.get(pc);
             //цикл по количеству ящиков
@@ -378,7 +378,7 @@ void Solver()
                             if(!mustDelete)
                                 if (ifPosFinal(newPos))
                                 {
-                                    std::cout << "found!!!" << std::endl;
+                                    std::cout << "\nfound!!!" << std::endl;
                                     found = true;
                                     goto endsolver3;
                                 }
@@ -423,7 +423,7 @@ void Solver()
                             if (!mustDelete)
                                 if (ifPosFinal(newPos))
                                 {
-                                    std::cout << "found!!!" << std::endl;
+                                    std::cout << "\nfound!!!" << std::endl;
                                     found = true;
                                     goto endsolver3;
                                 }
@@ -468,7 +468,7 @@ void Solver()
                             if (!mustDelete)
                                 if (ifPosFinal(newPos))
                                 {
-                                    std::cout << "found!!!" << std::endl;
+                                    std::cout << "\nfound!!!" << std::endl;
                                     found = true;
                                     goto endsolver3;
                                 }
@@ -513,7 +513,7 @@ void Solver()
                             if (!mustDelete)
                                 if (ifPosFinal(newPos))
                                 {
-                                    std::cout << "found!!!" << std::endl;
+                                    std::cout << "\nfound!!!" << std::endl;
                                     found = true;
                                     goto endsolver3;
                                 }
@@ -569,13 +569,14 @@ endsolver3:
 }
 void createInitPos()
 {
-    byte dummyPos[MAX_Y][MAX_X] =  {{255, 255, 255, 255, 255, 255, 255},
-                                    {255, 0,   0,   0,   0,   255, 255},
-                                    {255, 1,   1,   9,   0,   0,   255},
-                                    {255, 8,   8,   0,   8,   8,   255},
-                                    {255, 0,   0,   9,   1,   1,   255},
-                                    {255, 255, 0,   0,   0,   0,   255},
-                                    {255, 255, 255, 255, 255, 255, 255} };
+    byte dummyPos[MAX_Y][MAX_X] =  {{255, 255, 255, 255, 255, 255, 255, 255},
+                                    {255, 255, 255, 255, 255, 255, 255, 255},
+                                    {255, 255, 0,   0,   0,   0,   255, 255},
+                                    {255, 0,   1,   0,   1,   1,   0,   255},
+                                    {255, 8,   8,   8,   8,   8,   8,   255},
+                                    {255, 0,   1,   1,   0,   1,   0,   255},
+                                    {255, 255, 255, 0,   0,   255, 255, 255},
+                                    {255, 255, 255, 255, 255, 255, 255, 255} };
 /*    byte dummyPos[MAX_Y][MAX_X] = {{255, 255, 255, 255, 255, 255, 255},
                                     {255, 8,   8,   1,   8,   8,   255},
                                     {255, 8,   8,   255, 8,   8,   255},
@@ -590,7 +591,7 @@ void createInitPos()
     for (int i = 0; i < MAX_Y; i++)
         for (int j = 0; j < MAX_X; j++) startPos.pos[i][j] = dummyPos[i][j];
     startPos.manPos.x = 3;
-    startPos.manPos.y = 3;
+    startPos.manPos.y = 4;
     startPos.prev = nullptr;
 }
 
